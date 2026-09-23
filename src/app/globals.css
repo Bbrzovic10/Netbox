@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Farb-Tokens als HSL-Variablen.
+ * :root      = Light Mode
+ * .dark      = Dark Mode (Default, siehe <html class="dark"> im Layout)
+ * Akzentfarbe: Cyan #06b6d4  ->  hsl(189 94% 43%)
+ */
+@layer base {
+  :root {
+    --background: 210 30% 98%;
+    --foreground: 220 40% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 12%;
+
+    --muted: 210 20% 94%;
+    --muted-foreground: 220 12% 40%;
+
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 220 40% 15%;
+
+    --accent: 210 20% 92%;
+    --accent-foreground: 220 40% 15%;
+
+    --border: 220 16% 88%;
+    --input: 220 16% 85%;
+
+    --primary: 189 94% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --ring: 189 94% 43%;
+
+    --status-open: 215 14% 45%;
+    --status-progress: 32 92% 45%;
+    --status-done: 158 64% 38%;
+
+    --radius: 0.6rem;
+  }
+
+  .dark {
+    --background: 220 26% 8%;
+    --foreground: 210 20% 92%;
+
+    --card: 220 24% 11%;
+    --card-foreground: 210 20% 92%;
+
+    --muted: 220 16% 16%;
+    --muted-foreground: 215 15% 62%;
+
+    --secondary: 220 18% 15%;
+    --secondary-foreground: 210 20% 90%;
+
+    --accent: 220 18% 18%;
+    --accent-foreground: 210 20% 92%;
+
+    --border: 220 16% 20%;
+    --input: 220 16% 24%;
+
+    --primary: 189 94% 43%;
+    --primary-foreground: 220 45% 8%;
+
+    --ring: 189 94% 45%;
+
+    --status-open: 215 14% 58%;
+    --status-progress: 30 95% 58%;
+    --status-done: 158 64% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  /*
+   * Dezenter, technischer Hintergrund: zwei sehr weiche radiale Gradients in
+   * Akzentfarbe + ein feines Raster. Kein pures Schwarz.
+   */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        60rem 60rem at 85% -10%,
+        hsl(var(--primary) / 0.1),
+        transparent 60%
+      ),
+      radial-gradient(
+        50rem 50rem at -10% 110%,
+        hsl(262 83% 58% / 0.08),
+        transparent 55%
+      );
+  }
+
+  .dark body::before {
+    background:
+      radial-gradient(
+        60rem 60rem at 85% -10%,
+        hsl(var(--primary) / 0.14),
+        transparent 60%
+      ),
+      radial-gradient(
+        50rem 50rem at -10% 110%,
+        hsl(262 83% 58% / 0.12),
+        transparent 55%
+      );
+  }
+}
+
+/* Dezenter Custom-Scrollbar-Look */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .glass {
+    @apply bg-card/60 backdrop-blur-md border border-border;
+  }
+  /* Pulsierender Live-Punkt */
+  .live-dot {
+    box-shadow: 0 0 0 0 hsl(var(--status-done) / 0.6);
+    animation: live-pulse 2s infinite;
+  }
+  @keyframes live-pulse {
+    0% {
+      box-shadow: 0 0 0 0 hsl(var(--status-done) / 0.5);
+    }
+    70% {
+      box-shadow: 0 0 0 6px hsl(var(--status-done) / 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 hsl(var(--status-done) / 0);
+    }
+  }
+}

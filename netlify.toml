@@ -1,0 +1,22 @@
+# Netlify-Konfiguration fuer die Next.js-15-App.
+#
+# Der Build-Command (npm run build) macht drei Dinge:
+#   1. prisma generate  -> Prisma-Client erzeugen
+#   2. prisma db push    -> Tabellen in der Neon-DB anlegen/abgleichen (nutzt DIRECT_URL)
+#   3. next build        -> die App bauen
+#
+# Netlify erkennt Next.js automatisch und installiert das offizielle
+# @netlify/plugin-nextjs (App Router, SSR und /api-Route-Handler laufen damit).
+#
+# Benoetigte Environment-Variablen (Site settings -> Environment variables):
+#   DATABASE_URL  = gepoolter Neon-String (Host mit "-pooler")
+#   DIRECT_URL    = direkter Neon-String  (ohne "-pooler")
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

@@ -1,0 +1,87 @@
+// Prisma schema for the Sowacom NetBox tracking app.
+//
+// Datenbank: Postgres (z.B. Neon/Supabase), online-tauglich (Netlify/Vercel).
+//   - DATABASE_URL : gepoolte Verbindung (Host mit "-pooler") -> App-Betrieb
+//   - DIRECT_URL   : direkte Verbindung (ohne "-pooler")      -> Migrationen/db push
+//
+// Fuer rein lokale Entwicklung mit SQLite wieder auf provider = "sqlite"
+// stellen und DATABASE_URL="file:./dev.db" setzen (directUrl dann entfernen).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+/// Ein Teammitglied. Kein echtes Login-System – der Name wird lokal im
+/// Browser gespeichert. Zum Handeln als dieser User ist aber das bei der
+/// Erstellung vergebene Passwort noetig (als Hash gespeichert).
+model User {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  farbe        String // Hex-Farbe fuer den Avatar, z.B. "#06b6d4"
+  passwordHash String // bcrypt-Hash des vergebenen Passworts
+  createdAt    DateTime @default(now())
+
+  // Kunden, die diesem User aktuell zugewiesen sind / von ihm bearbeitet werden
+  assignedCustomers Customer[]     @relation("CustomerAssignee")
+  activeWork        ActiveWork[]
+  activities        ActivityLog[]
+}
+
+/// Der Bearbeitungsstatus eines Kunden.
+enum CustomerStatus {
+  AUFGENOMMEN // -> "Zugewiesen an <User>"
+  IN_BEARBEITUNG // -> "Wird von <User> bearbeitet"
+  ERLEDIGT // -> "Fertiggestellt von <User>"
+}
+
+/// Ein Kunde, dessen Geraete in NetBox erfasst werden.
+model Customer {
+  id        String         @id @default(cuid())
+  name      String
+  notizen   String? // Freitext-Notizen
+  status    CustomerStatus @default(AUFGENOMMEN)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Der User, auf den sich der aktuelle Status bezieht
+  // (zugewiesen an / bearbeitet von / fertiggestellt von).
+  assigneeId String?
+  assignee   User?   @relation("CustomerAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  activeWork ActiveWork[]
+  activities ActivityLog[]
+}
+
+/// "Arbeitet gerade an" – ein Live-Marker. Wird nach 30 Min Inaktivitaet
+/// serverseitig als abgelaufen behandelt (siehe lib/active-work.ts).
+model ActiveWork {
+  id         String   @id @default(cuid())
+  userId     String
+  customerId String
+  startedAt  DateTime @default(now())
+  lastPing   DateTime @default(now()) // fuer den 30-Min-Timeout
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Pro User + Kunde nur ein aktiver Eintrag.
+  @@unique([userId, customerId])
+}
+
+/// Aktivitaets-Log: Statuswechsel, Zuweisungen, Notiz-Aenderungen.
+model ActivityLog {
+  id         String   @id @default(cuid())
+  customerId String
+  userId     String?
+  message    String // vorformulierter, menschenlesbarer Text
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
