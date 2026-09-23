@@ -9,6 +9,9 @@
 
 generator client {
   provider = "prisma-client-js"
+  // "native" fuer lokal/Build, "rhel-openssl-3.0.x" fuer Netlifys
+  // Serverless-Runtime (AWS Lambda) – sonst fehlt dort die Query-Engine.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
